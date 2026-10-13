@@ -1,0 +1,660 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Lab 3: Campus Guide code changes</title><style>body{font:17px system-ui;max-width:1100px;margin:40px auto;padding:0 24px;color:#172335}pre{background:#f5f6f8;padding:18px;overflow:auto;font:14px/1.6 Consolas,monospace;tab-size:4}.added{color:#b00020;font-weight:600}h2{margin-top:40px}@media print{pre{white-space:pre-wrap;overflow:visible}body{margin:0}.added{color:#b00020!important}}</style><h1>Lab 3: Campus Guide</h1><p>Red = added or changed code. Black = retained code. This adds Campus Guide as choice 6 while keeping the previous five demonstrations.</p><p>The complete plain Kotlin files are supplied in this package. Keep your current MainActivity calling MobileAppDemos() inside MobileAppDemosTheme.</p><p>Replace the existing file containing MobileAppDemos and the five demo functions with MobileAppDemos.kt below. Do not leave duplicate declarations. If that code currently lives inside MainActivity.kt, keep the activity class and remove only the old composables/enum after moving them into this file.</p><p>Your supplied Theme.kt needs no changes. It already selects your light/dark colours and has no dynamic-colour branch. Retain Typography.kt and existing Previews.</p><p>All hours and facility information are teaching examples. The supplied building illustration is a placeholder: replace it with five suitable campus photographs for the original image challenge.</p><h2>app/src/main/java/com/example/mobileappdemos/MobileAppDemos.kt</h2><pre><span class="added">package com.example.mobileappdemos</span>
+<span class="added"></span>
+<span class="added">import androidx.activity.compose.BackHandler</span>
+<span class="added">import androidx.compose.foundation.layout.*</span>
+<span class="added">import androidx.compose.foundation.lazy.LazyColumn</span>
+<span class="added">import androidx.compose.foundation.lazy.items</span>
+<span class="added">import androidx.compose.foundation.rememberScrollState</span>
+<span class="added">import androidx.compose.foundation.verticalScroll</span>
+<span class="added">import androidx.compose.foundation.shape.RoundedCornerShape</span>
+<span class="added">import androidx.compose.material3.*</span>
+<span class="added">import androidx.compose.runtime.*</span>
+<span class="added">import androidx.compose.runtime.saveable.rememberSaveable</span>
+<span class="added">import androidx.compose.ui.Modifier</span>
+<span class="added">import androidx.compose.ui.unit.dp</span>
+<span class="added">import androidx.compose.ui.unit.sp</span>
+<span class="added">import com.example.mobileappdemos.campus.CampusGuideApp</span>
+<span class="added"></span>
+private enum class Demo(val title: String) {
+    StaticUi(&quot;1. Static Compose UI&quot;),
+    Recomposition(&quot;2. Recomposition&quot;),
+    TextInput(&quot;3. Text input and validation&quot;),
+    Profile(&quot;4. Interactive profile&quot;),
+<span class="added">    ShoppingList(&quot;5. Shopping list&quot;),</span>
+<span class="added">    CampusGuide(&quot;6. Campus Guide&quot;)</span>
+}
+
+@Composable
+fun MobileAppDemos() {
+    var selectedDemo by rememberSaveable {
+        mutableStateOf&lt;Demo?&gt;(null)
+    }
+
+    val currentDemo = selectedDemo
+
+    if (currentDemo == null) {
+        DemoMenu(
+            onSelect = { demo -&gt;
+                selectedDemo = demo
+            }
+        )
+<span class="added">    } else if (currentDemo == Demo.CampusGuide) {</span>
+<span class="added">        CampusGuideApp(onExit = { selectedDemo = null })</span>
+    } else {
+        BackHandler {
+            selectedDemo = null
+        }
+
+        DemoScreen(
+            demo = currentDemo,
+            onBack = {
+                selectedDemo = null
+            }
+        )
+    }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun DemoMenu(onSelect: (Demo) -&gt; Unit) {
+    Scaffold(
+        topBar = { TopAppBar(title = { Text(&quot;Mobile App Demos&quot;) }) }
+    ) { innerPadding -&gt;
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+<span class="added">                .consumeWindowInsets(innerPadding)</span>
+<span class="added">                .padding(24.dp)</span>
+<span class="added">                .verticalScroll(rememberScrollState()),</span>
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(&quot;Choose a classroom demonstration&quot;)
+            Demo.entries.forEach { demo -&gt;
+                Button(
+                    onClick = { onSelect(demo) },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(demo.title)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun DemoScreen(demo: Demo, onBack: () -&gt; Unit) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(demo.title) },
+                navigationIcon = {
+                    TextButton(onClick = onBack) { Text(&quot;Back&quot;) }
+                }
+            )
+        }
+    ) { innerPadding -&gt;
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+<span class="added">                .consumeWindowInsets(innerPadding)</span>
+                .padding(24.dp)
+        ) {
+            when (demo) {
+                Demo.StaticUi -&gt; StaticUiDemo()
+                Demo.Recomposition -&gt; RecompositionDemo()
+                Demo.TextInput -&gt; TextInputDemo()
+                Demo.Profile -&gt; ProfileDemo()
+                Demo.ShoppingList -&gt; ShoppingListDemo()
+<span class="added">                Demo.CampusGuide -&gt; Unit // Handled by CampusGuideApp above.</span>
+            }
+        }
+    }
+}
+@Composable
+private fun StaticUiDemo() {
+    var usePrimary by remember {
+        mutableStateOf(true)
+    }
+
+    var roundedCorners by remember {
+        mutableStateOf(true)
+    }
+
+    var message by remember {
+        mutableStateOf(&quot;Try the button styles below.&quot;)
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        Text(
+            text = &quot;Student profile&quot;,
+            style = MaterialTheme.typography.headlineMedium,
+            color = if (usePrimary) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.secondary
+            }
+        )
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(
+                if (roundedCorners) 24.dp else 4.dp
+            ),
+            colors = CardDefaults.cardColors(
+                containerColor =
+                    MaterialTheme.colorScheme.surfaceVariant,
+                contentColor =
+                    MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = &quot;Profile details&quot;,
+                    style = MaterialTheme.typography.titleMedium
+                )
+
+                Text(
+                    text = &quot;Name: Mary&quot;,
+                    style = MaterialTheme.typography.bodyLarge
+                )
+
+                Text(
+                    text = &quot;Score: 12&quot;,
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            }
+        }
+
+        Button(
+            onClick = {
+                message = &quot;Continue clicked.&quot;
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(&quot;Continue&quot;)
+        }
+
+        OutlinedButton(
+            onClick = {
+                message = &quot;Edit profile clicked.&quot;
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(&quot;Edit profile&quot;)
+        }
+
+        TextButton(
+            onClick = {
+                message = &quot;Help clicked.&quot;
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(&quot;Help&quot;)
+        }
+
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyMedium
+        )
+
+        Button(
+            onClick = {
+                usePrimary = !usePrimary
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(&quot;Change heading colour&quot;)
+        }
+
+        OutlinedButton(
+            onClick = {
+                roundedCorners = !roundedCorners
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(&quot;Change card corners&quot;)
+        }
+    }
+}
+
+
+@Composable
+private fun RecompositionDemo() {
+    var composeScore by remember { mutableIntStateOf(0) }
+    var demoKey by remember { mutableIntStateOf(0) }
+
+    // A key recreates this content when the demonstration is reset.
+    androidx.compose.runtime.key(demoKey) {
+        var ordinaryScore = 0
+
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(&quot;Ordinary variable shown: $ordinaryScore&quot;)
+            OutlinedButton(onClick = { ordinaryScore++ }) {
+                Text(&quot;Increment ordinary variable&quot;)
+            }
+            Text(&quot;The handler runs, but no observable state requests a UI update.&quot;)
+
+            HorizontalDivider()
+
+            Text(&quot;Compose state shown: $composeScore&quot;)
+            Button(onClick = { composeScore++ }) {
+                Text(&quot;Increment Compose state&quot;)
+            }
+            Text(&quot;Changing observed state schedules recomposition.&quot;)
+
+            Spacer(Modifier.height(8.dp))
+            TextButton(
+                onClick = {
+                    composeScore = 0
+                    demoKey++
+                }
+            ) {
+                Text(&quot;Reset demonstration&quot;)
+            }
+        }
+    }
+}
+
+@Composable
+private fun TextInputDemo() {
+    var name by remember { mutableStateOf(&quot;&quot;) }
+
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        OutlinedTextField(
+            value = name,
+            onValueChange = { name = it },
+            label = { Text(&quot;Name&quot;) },
+            modifier = Modifier.fillMaxWidth()
+        )
+        if (name.isBlank()) {
+            Text(&quot;Enter your name&quot;)
+        } else {
+            Text(&quot;Welcome, $name&quot;)
+        }
+        Text(&quot;Characters entered: ${name.length}&quot;)
+    }
+}
+
+@Composable
+private fun ProfileDemo() {
+    var name by rememberSaveable { mutableStateOf(&quot;&quot;) }
+    var score by rememberSaveable { mutableIntStateOf(0) }
+
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(&quot;Student profile&quot;, fontSize = 28.sp)
+        OutlinedTextField(
+            value = name,
+            onValueChange = { name = it },
+            label = { Text(&quot;Student name&quot;) },
+            modifier = Modifier.fillMaxWidth()
+        )
+        Text(if (name.isBlank()) &quot;Enter your name&quot; else &quot;Welcome, $name&quot;)
+        Text(&quot;Score: $score&quot;, fontSize = 22.sp)
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Button(onClick = { score++ }) { Text(&quot;Increase score&quot;) }
+            OutlinedButton(onClick = { score = 0 }) { Text(&quot;Reset score&quot;) }
+        }
+    }
+}
+
+@Composable
+private fun ShoppingListDemo() {
+    var newItem by remember { mutableStateOf(&quot;&quot;) }
+    val items = remember { mutableStateListOf(&quot;Rice&quot;, &quot;Tea&quot;) }
+
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(&quot;Shopping list&quot;, fontSize = 28.sp)
+        OutlinedTextField(
+            value = newItem,
+            onValueChange = { newItem = it },
+            label = { Text(&quot;New item&quot;) },
+            modifier = Modifier.fillMaxWidth()
+        )
+        Button(
+            onClick = {
+                if (newItem.isNotBlank()) {
+                    items.add(newItem.trim())
+                    newItem = &quot;&quot;
+                }
+            },
+            enabled = newItem.isNotBlank()
+        ) {
+            Text(&quot;Add item&quot;)
+        }
+        Text(&quot;${items.size} item(s)&quot;)
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            items(items) { item -&gt;
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(item)
+                        TextButton(onClick = { items.remove(item) }) {
+                            Text(&quot;Remove&quot;)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+</pre><h2>app/src/main/java/com/example/mobileappdemos/campus/CafeteriaScreen.kt</h2><pre><span class="added">package com.example.mobileappdemos.campus</span>
+<span class="added"></span>
+<span class="added">import androidx.compose.runtime.Composable</span>
+<span class="added">import androidx.compose.ui.tooling.preview.Preview</span>
+<span class="added">import com.example.mobileappdemos.R</span>
+<span class="added">import com.example.mobileappdemos.ui.theme.MobileAppDemosTheme</span>
+<span class="added"></span>
+<span class="added">@Composable</span>
+<span class="added">fun CafeteriaScreen() {</span>
+<span class="added">    CampusContent(</span>
+<span class="added">        titleRes = R.string.cafeteria_title,</span>
+<span class="added">        descriptionRes = R.string.cafeteria_description,</span>
+<span class="added">        imageRes = R.drawable.campus_building,</span>
+<span class="added">        imageDescriptionRes = R.string.cafeteria_image_description,</span>
+<span class="added">        factsRes = R.string.cafeteria_facts</span>
+<span class="added">    )</span>
+<span class="added">}</span>
+<span class="added"></span>
+<span class="added">@Preview(showBackground = true)</span>
+<span class="added">@Composable</span>
+<span class="added">private fun CafeteriaScreenPreview() {</span>
+<span class="added">    MobileAppDemosTheme { CafeteriaScreen() }</span>
+<span class="added">}</span>
+</pre><h2>app/src/main/java/com/example/mobileappdemos/campus/CampusContent.kt</h2><pre><span class="added">package com.example.mobileappdemos.campus</span>
+<span class="added"></span>
+<span class="added">import androidx.compose.foundation.Image</span>
+<span class="added">import androidx.compose.foundation.layout.*</span>
+<span class="added">import androidx.compose.foundation.rememberScrollState</span>
+<span class="added">import androidx.compose.foundation.verticalScroll</span>
+<span class="added">import androidx.compose.foundation.shape.RoundedCornerShape</span>
+<span class="added">import androidx.compose.material3.*</span>
+<span class="added">import androidx.compose.runtime.Composable</span>
+<span class="added">import androidx.compose.ui.Modifier</span>
+<span class="added">import androidx.compose.ui.layout.ContentScale</span>
+<span class="added">import androidx.compose.ui.res.painterResource</span>
+<span class="added">import androidx.compose.ui.res.stringResource</span>
+<span class="added">import androidx.compose.ui.unit.dp</span>
+<span class="added">import com.example.mobileappdemos.R</span>
+<span class="added"></span>
+<span class="added">@Composable</span>
+<span class="added">fun CampusContent(titleRes: Int, descriptionRes: Int, imageRes: Int,</span>
+<span class="added">                  imageDescriptionRes: Int, factsRes: Int) {</span>
+<span class="added">    Column(</span>
+<span class="added">        modifier = Modifier.fillMaxSize()</span>
+<span class="added">            .verticalScroll(rememberScrollState()).padding(24.dp),</span>
+<span class="added">        verticalArrangement = Arrangement.spacedBy(16.dp)</span>
+<span class="added">    ) {</span>
+<span class="added">        Text(stringResource(titleRes), style = MaterialTheme.typography.headlineMedium)</span>
+<span class="added">        Image(</span>
+<span class="added">            painter = painterResource(imageRes),</span>
+<span class="added">            contentDescription = stringResource(imageDescriptionRes),</span>
+<span class="added">            modifier = Modifier.fillMaxWidth().height(180.dp),</span>
+<span class="added">            contentScale = ContentScale.Fit</span>
+<span class="added">        )</span>
+<span class="added">        Text(stringResource(descriptionRes))</span>
+<span class="added">        Card(</span>
+<span class="added">            modifier = Modifier.fillMaxWidth(),</span>
+<span class="added">            shape = RoundedCornerShape(16.dp),</span>
+<span class="added">            colors = CardDefaults.cardColors(</span>
+<span class="added">                containerColor = MaterialTheme.colorScheme.surfaceVariant,</span>
+<span class="added">                contentColor = MaterialTheme.colorScheme.onSurfaceVariant</span>
+<span class="added">            )</span>
+<span class="added">        ) {</span>
+<span class="added">            Column(modifier = Modifier.padding(16.dp),</span>
+<span class="added">                   verticalArrangement = Arrangement.spacedBy(8.dp)) {</span>
+<span class="added">                Text(stringResource(R.string.facilities_heading),</span>
+<span class="added">                     style = MaterialTheme.typography.titleMedium)</span>
+<span class="added">                Text(stringResource(factsRes))</span>
+<span class="added">            }</span>
+<span class="added">        }</span>
+<span class="added">        Card(modifier = Modifier.fillMaxWidth()) {</span>
+<span class="added">            Column(modifier = Modifier.padding(16.dp),</span>
+<span class="added">                   verticalArrangement = Arrangement.spacedBy(8.dp)) {</span>
+<span class="added">                Text(stringResource(R.string.example_hours_heading),</span>
+<span class="added">                     style = MaterialTheme.typography.titleMedium)</span>
+<span class="added">                Row(modifier = Modifier.fillMaxWidth(),</span>
+<span class="added">                    horizontalArrangement = Arrangement.spacedBy(16.dp)) {</span>
+<span class="added">                    Column(modifier = Modifier.weight(1f)) {</span>
+<span class="added">                        Text(stringResource(R.string.opens_label))</span>
+<span class="added">                        Text(stringResource(R.string.opens_time))</span>
+<span class="added">                    }</span>
+<span class="added">                    Column(modifier = Modifier.weight(1f)) {</span>
+<span class="added">                        Text(stringResource(R.string.closes_label))</span>
+<span class="added">                        Text(stringResource(R.string.closes_time))</span>
+<span class="added">                    }</span>
+<span class="added">                }</span>
+<span class="added">            }</span>
+<span class="added">        }</span>
+<span class="added">    }</span>
+<span class="added">}</span>
+</pre><h2>app/src/main/java/com/example/mobileappdemos/campus/CampusGuideApp.kt</h2><pre><span class="added">package com.example.mobileappdemos.campus</span>
+<span class="added"></span>
+<span class="added">import androidx.activity.compose.BackHandler</span>
+<span class="added">import androidx.compose.foundation.layout.*</span>
+<span class="added">import androidx.compose.foundation.rememberScrollState</span>
+<span class="added">import androidx.compose.foundation.verticalScroll</span>
+<span class="added">import androidx.compose.material3.*</span>
+<span class="added">import androidx.compose.runtime.*</span>
+<span class="added">import androidx.compose.runtime.saveable.rememberSaveable</span>
+<span class="added">import androidx.compose.ui.Modifier</span>
+<span class="added">import androidx.compose.ui.res.stringResource</span>
+<span class="added">import androidx.compose.ui.unit.dp</span>
+<span class="added">import com.example.mobileappdemos.R</span>
+<span class="added"></span>
+<span class="added">private enum class CampusScreen(val titleRes: Int) {</span>
+<span class="added">    Library(R.string.library_title),</span>
+<span class="added">    ComputingLabs(R.string.computing_title),</span>
+<span class="added">    Cafeteria(R.string.cafeteria_title),</span>
+<span class="added">    SportsCentre(R.string.sports_title),</span>
+<span class="added">    StudentSupport(R.string.support_title)</span>
+<span class="added">}</span>
+<span class="added"></span>
+<span class="added">@OptIn(ExperimentalMaterial3Api::class)</span>
+<span class="added">@Composable</span>
+<span class="added">fun CampusGuideApp(onExit: () -&gt; Unit) {</span>
+<span class="added">    var selectedScreen by rememberSaveable {</span>
+<span class="added">        mutableStateOf&lt;CampusScreen?&gt;(null)</span>
+<span class="added">    }</span>
+<span class="added">    val currentScreen = selectedScreen</span>
+<span class="added">    val onBack: () -&gt; Unit = {</span>
+<span class="added">        if (currentScreen == null) onExit() else selectedScreen = null</span>
+<span class="added">    }</span>
+<span class="added">    BackHandler(onBack = onBack)</span>
+<span class="added"></span>
+<span class="added">    Scaffold(</span>
+<span class="added">        topBar = {</span>
+<span class="added">            TopAppBar(</span>
+<span class="added">                title = {</span>
+<span class="added">                    Text(stringResource(currentScreen?.titleRes ?: R.string.campus_heading))</span>
+<span class="added">                },</span>
+<span class="added">                navigationIcon = {</span>
+<span class="added">                    TextButton(onClick = onBack) {</span>
+<span class="added">                        Text(stringResource(R.string.back_label))</span>
+<span class="added">                    }</span>
+<span class="added">                }</span>
+<span class="added">            )</span>
+<span class="added">        }</span>
+<span class="added">    ) { innerPadding -&gt;</span>
+<span class="added">        Box(</span>
+<span class="added">            modifier = Modifier</span>
+<span class="added">                .fillMaxSize()</span>
+<span class="added">                .padding(innerPadding)</span>
+<span class="added">                .consumeWindowInsets(innerPadding)</span>
+<span class="added">        ) {</span>
+<span class="added">            when (currentScreen) {</span>
+<span class="added">                null -&gt; CampusMenu(onSelect = { selectedScreen = it })</span>
+<span class="added">                CampusScreen.Library -&gt; LibraryScreen()</span>
+<span class="added">                CampusScreen.ComputingLabs -&gt; ComputingLabsScreen()</span>
+<span class="added">                CampusScreen.Cafeteria -&gt; CafeteriaScreen()</span>
+<span class="added">                CampusScreen.SportsCentre -&gt; SportsCentreScreen()</span>
+<span class="added">                CampusScreen.StudentSupport -&gt; StudentSupportScreen()</span>
+<span class="added">            }</span>
+<span class="added">        }</span>
+<span class="added">    }</span>
+<span class="added">}</span>
+<span class="added"></span>
+<span class="added">@Composable</span>
+<span class="added">private fun CampusMenu(onSelect: (CampusScreen) -&gt; Unit) {</span>
+<span class="added">    Column(</span>
+<span class="added">        modifier = Modifier.fillMaxSize()</span>
+<span class="added">            .verticalScroll(rememberScrollState()).padding(24.dp),</span>
+<span class="added">        verticalArrangement = Arrangement.spacedBy(16.dp)</span>
+<span class="added">    ) {</span>
+<span class="added">        Text(stringResource(R.string.campus_heading),</span>
+<span class="added">            style = MaterialTheme.typography.headlineMedium)</span>
+<span class="added">        Text(stringResource(R.string.campus_intro))</span>
+<span class="added">        CampusScreen.entries.forEach { screen -&gt;</span>
+<span class="added">            Card(onClick = { onSelect(screen) }, modifier = Modifier.fillMaxWidth()) {</span>
+<span class="added">                Column(modifier = Modifier.padding(16.dp)) {</span>
+<span class="added">                    Text(stringResource(screen.titleRes),</span>
+<span class="added">                        style = MaterialTheme.typography.titleMedium)</span>
+<span class="added">                }</span>
+<span class="added">            }</span>
+<span class="added">        }</span>
+<span class="added">    }</span>
+<span class="added">}</span>
+</pre><h2>app/src/main/java/com/example/mobileappdemos/campus/ComputingLabsScreen.kt</h2><pre><span class="added">package com.example.mobileappdemos.campus</span>
+<span class="added"></span>
+<span class="added">import androidx.compose.runtime.Composable</span>
+<span class="added">import androidx.compose.ui.tooling.preview.Preview</span>
+<span class="added">import com.example.mobileappdemos.R</span>
+<span class="added">import com.example.mobileappdemos.ui.theme.MobileAppDemosTheme</span>
+<span class="added"></span>
+<span class="added">@Composable</span>
+<span class="added">fun ComputingLabsScreen() {</span>
+<span class="added">    CampusContent(</span>
+<span class="added">        titleRes = R.string.computing_title,</span>
+<span class="added">        descriptionRes = R.string.computing_description,</span>
+<span class="added">        imageRes = R.drawable.campus_building,</span>
+<span class="added">        imageDescriptionRes = R.string.computing_image_description,</span>
+<span class="added">        factsRes = R.string.computing_facts</span>
+<span class="added">    )</span>
+<span class="added">}</span>
+<span class="added"></span>
+<span class="added">@Preview(showBackground = true)</span>
+<span class="added">@Composable</span>
+<span class="added">private fun ComputingLabsScreenPreview() {</span>
+<span class="added">    MobileAppDemosTheme { ComputingLabsScreen() }</span>
+<span class="added">}</span>
+</pre><h2>app/src/main/java/com/example/mobileappdemos/campus/LibraryScreen.kt</h2><pre><span class="added">package com.example.mobileappdemos.campus</span>
+<span class="added"></span>
+<span class="added">import androidx.compose.runtime.Composable</span>
+<span class="added">import androidx.compose.ui.tooling.preview.Preview</span>
+<span class="added">import com.example.mobileappdemos.R</span>
+<span class="added">import com.example.mobileappdemos.ui.theme.MobileAppDemosTheme</span>
+<span class="added"></span>
+<span class="added">@Composable</span>
+<span class="added">fun LibraryScreen() {</span>
+<span class="added">    CampusContent(</span>
+<span class="added">        titleRes = R.string.library_title,</span>
+<span class="added">        descriptionRes = R.string.library_description,</span>
+<span class="added">        imageRes = R.drawable.campus_building,</span>
+<span class="added">        imageDescriptionRes = R.string.library_image_description,</span>
+<span class="added">        factsRes = R.string.library_facts</span>
+<span class="added">    )</span>
+<span class="added">}</span>
+<span class="added"></span>
+<span class="added">@Preview(showBackground = true)</span>
+<span class="added">@Composable</span>
+<span class="added">private fun LibraryScreenPreview() {</span>
+<span class="added">    MobileAppDemosTheme { LibraryScreen() }</span>
+<span class="added">}</span>
+</pre><h2>app/src/main/java/com/example/mobileappdemos/campus/SportsCentreScreen.kt</h2><pre><span class="added">package com.example.mobileappdemos.campus</span>
+<span class="added"></span>
+<span class="added">import androidx.compose.runtime.Composable</span>
+<span class="added">import androidx.compose.ui.tooling.preview.Preview</span>
+<span class="added">import com.example.mobileappdemos.R</span>
+<span class="added">import com.example.mobileappdemos.ui.theme.MobileAppDemosTheme</span>
+<span class="added"></span>
+<span class="added">@Composable</span>
+<span class="added">fun SportsCentreScreen() {</span>
+<span class="added">    CampusContent(</span>
+<span class="added">        titleRes = R.string.sports_title,</span>
+<span class="added">        descriptionRes = R.string.sports_description,</span>
+<span class="added">        imageRes = R.drawable.campus_building,</span>
+<span class="added">        imageDescriptionRes = R.string.sports_image_description,</span>
+<span class="added">        factsRes = R.string.sports_facts</span>
+<span class="added">    )</span>
+<span class="added">}</span>
+<span class="added"></span>
+<span class="added">@Preview(showBackground = true)</span>
+<span class="added">@Composable</span>
+<span class="added">private fun SportsCentreScreenPreview() {</span>
+<span class="added">    MobileAppDemosTheme { SportsCentreScreen() }</span>
+<span class="added">}</span>
+</pre><h2>app/src/main/java/com/example/mobileappdemos/campus/StudentSupportScreen.kt</h2><pre><span class="added">package com.example.mobileappdemos.campus</span>
+<span class="added"></span>
+<span class="added">import androidx.compose.runtime.Composable</span>
+<span class="added">import androidx.compose.ui.tooling.preview.Preview</span>
+<span class="added">import com.example.mobileappdemos.R</span>
+<span class="added">import com.example.mobileappdemos.ui.theme.MobileAppDemosTheme</span>
+<span class="added"></span>
+<span class="added">@Composable</span>
+<span class="added">fun StudentSupportScreen() {</span>
+<span class="added">    CampusContent(</span>
+<span class="added">        titleRes = R.string.support_title,</span>
+<span class="added">        descriptionRes = R.string.support_description,</span>
+<span class="added">        imageRes = R.drawable.campus_building,</span>
+<span class="added">        imageDescriptionRes = R.string.support_image_description,</span>
+<span class="added">        factsRes = R.string.support_facts</span>
+<span class="added">    )</span>
+<span class="added">}</span>
+<span class="added"></span>
+<span class="added">@Preview(showBackground = true)</span>
+<span class="added">@Composable</span>
+<span class="added">private fun StudentSupportScreenPreview() {</span>
+<span class="added">    MobileAppDemosTheme { StudentSupportScreen() }</span>
+<span class="added">}</span>
+</pre><h2>app/src/main/res/drawable/campus_building.xml</h2><pre><span class="added">&lt;vector xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;</span>
+<span class="added">    android:width=&quot;180dp&quot; android:height=&quot;180dp&quot;</span>
+<span class="added">    android:viewportWidth=&quot;180&quot; android:viewportHeight=&quot;180&quot;&gt;</span>
+<span class="added">    &lt;path android:fillColor=&quot;#415F91&quot; android:pathData=&quot;M20,65 L90,20 L160,65 Z M30,75 L150,75 L150,160 L30,160 Z&quot; /&gt;</span>
+<span class="added">    &lt;path android:fillColor=&quot;#FFFFFF&quot; android:pathData=&quot;M45,90 L65,90 L65,110 L45,110 Z M80,90 L100,90 L100,110 L80,110 Z M115,90 L135,90 L135,110 L115,110 Z M75,125 L105,125 L105,160 L75,160 Z&quot; /&gt;</span>
+<span class="added">&lt;/vector&gt;</span>
+</pre><h2>app/src/main/res/values/lab3_strings.xml</h2><pre><span class="added">&lt;resources&gt;</span>
+<span class="added">    &lt;string name=&quot;campus_heading&quot;&gt;Explore Campus&lt;/string&gt;</span>
+<span class="added">    &lt;string name=&quot;campus_intro&quot;&gt;Find useful places and support around campus.&lt;/string&gt;</span>
+<span class="added">    &lt;string name=&quot;back_label&quot;&gt;Back&lt;/string&gt;</span>
+<span class="added">    &lt;string name=&quot;facilities_heading&quot;&gt;Facilities&lt;/string&gt;</span>
+<span class="added">    &lt;string name=&quot;example_hours_heading&quot;&gt;Example opening hours&lt;/string&gt;</span>
+<span class="added">    &lt;string name=&quot;opens_label&quot;&gt;Opens&lt;/string&gt;</span>
+<span class="added">    &lt;string name=&quot;closes_label&quot;&gt;Closes&lt;/string&gt;</span>
+<span class="added">    &lt;string name=&quot;opens_time&quot;&gt;09:00&lt;/string&gt;</span>
+<span class="added">    &lt;string name=&quot;closes_time&quot;&gt;17:00&lt;/string&gt;</span>
+<span class="added">    &lt;string name=&quot;library_title&quot;&gt;Library&lt;/string&gt;</span>
+<span class="added">    &lt;string name=&quot;library_description&quot;&gt;Find a space to study and access learning resources.&lt;/string&gt;</span>
+<span class="added">    &lt;string name=&quot;library_facts&quot;&gt;Study spaces, computers and book loans&lt;/string&gt;</span>
+<span class="added">    &lt;string name=&quot;library_image_description&quot;&gt;Illustration of a campus building&lt;/string&gt;</span>
+<span class="added">    &lt;string name=&quot;computing_title&quot;&gt;Computing labs&lt;/string&gt;</span>
+<span class="added">    &lt;string name=&quot;computing_description&quot;&gt;Explore computing facilities for your coursework.&lt;/string&gt;</span>
+<span class="added">    &lt;string name=&quot;computing_facts&quot;&gt;Computers, software and practical workspaces&lt;/string&gt;</span>
+<span class="added">    &lt;string name=&quot;computing_image_description&quot;&gt;Illustration of a campus building&lt;/string&gt;</span>
+<span class="added">    &lt;string name=&quot;cafeteria_title&quot;&gt;Cafeteria&lt;/string&gt;</span>
+<span class="added">    &lt;string name=&quot;cafeteria_description&quot;&gt;Find somewhere to eat and meet other students.&lt;/string&gt;</span>
+<span class="added">    &lt;string name=&quot;cafeteria_facts&quot;&gt;Meals, drinks and seating&lt;/string&gt;</span>
+<span class="added">    &lt;string name=&quot;cafeteria_image_description&quot;&gt;Illustration of a campus building&lt;/string&gt;</span>
+<span class="added">    &lt;string name=&quot;sports_title&quot;&gt;Sports centre&lt;/string&gt;</span>
+<span class="added">    &lt;string name=&quot;sports_description&quot;&gt;Explore opportunities to exercise on campus.&lt;/string&gt;</span>
+<span class="added">    &lt;string name=&quot;sports_facts&quot;&gt;Fitness spaces and sports facilities&lt;/string&gt;</span>
+<span class="added">    &lt;string name=&quot;sports_image_description&quot;&gt;Illustration of a campus building&lt;/string&gt;</span>
+<span class="added">    &lt;string name=&quot;support_title&quot;&gt;Student support&lt;/string&gt;</span>
+<span class="added">    &lt;string name=&quot;support_description&quot;&gt;Find help with student life and your studies.&lt;/string&gt;</span>
+<span class="added">    &lt;string name=&quot;support_facts&quot;&gt;Advice, wellbeing support and study guidance&lt;/string&gt;</span>
+<span class="added">    &lt;string name=&quot;support_image_description&quot;&gt;Illustration of a campus building&lt;/string&gt;</span>
+<span class="added">&lt;/resources&gt;</span>
+</pre><h2>Lecturer checkpoints</h2><ul><li>null shows the Campus Guide menu. Assigning a CampusScreen opens its content.</li><li>The same selection callback works with a button or a clickable card.</li><li>Back from a campus content screen returns to the campus menu. Back from that menu returns to the demo menu.</li><li>Scaffold padding is applied and consumed once. Content adds its own 24.dp padding.</li><li>lab3_strings.xml is a separate values resource file to avoid overwriting existing strings.xml. Android combines both; the entries can instead be merged into the existing resources element.</li></ul><p>Test every demo and campus screen, both Back actions, large fonts, small-screen scrolling and both themes.</p><p>Reference: <a href="https://developer.android.com/develop/ui/compose/components/card">Material 3 Card</a> and <a href="https://developer.android.com/develop/ui/compose/resources">Compose resources</a>.</p></html>

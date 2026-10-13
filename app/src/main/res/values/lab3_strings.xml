@@ -1,0 +1,31 @@
+<resources>
+    <string name="campus_heading">Explore Campus</string>
+    <string name="campus_intro">Find useful places and support around campus.</string>
+    <string name="back_label">Back</string>
+    <string name="facilities_heading">Facilities</string>
+    <string name="example_hours_heading">Example opening hours</string>
+    <string name="opens_label">Opens</string>
+    <string name="closes_label">Closes</string>
+    <string name="opens_time">09:00</string>
+    <string name="closes_time">17:00</string>
+    <string name="library_title">Library</string>
+    <string name="library_description">Find a space to study and access learning resources.</string>
+    <string name="library_facts">Study spaces, computers and book loans</string>
+    <string name="library_image_description">Illustration of a campus building</string>
+    <string name="computing_title">Computing labs</string>
+    <string name="computing_description">Explore computing facilities for your coursework.</string>
+    <string name="computing_facts">Computers, software and practical workspaces</string>
+    <string name="computing_image_description">Illustration of a campus building</string>
+    <string name="cafeteria_title">Cafeteria</string>
+    <string name="cafeteria_description">Find somewhere to eat and meet other students.</string>
+    <string name="cafeteria_facts">Meals, drinks and seating</string>
+    <string name="cafeteria_image_description">Illustration of a campus building</string>
+    <string name="sports_title">Sports centre</string>
+    <string name="sports_description">Explore opportunities to exercise on campus.</string>
+    <string name="sports_facts">Fitness spaces and sports facilities</string>
+    <string name="sports_image_description">Illustration of a campus building</string>
+    <string name="support_title">Student support</string>
+    <string name="support_description">Find help with student life and your studies.</string>
+    <string name="support_facts">Advice, wellbeing support and study guidance</string>
+    <string name="support_image_description">Illustration of a campus building</string>
+</resources>
